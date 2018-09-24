@@ -262,4 +262,66 @@ g = lambda h: softmax(U.T * h + c)
       other simplifications
     - Popular as of 2015 
 
+## The Unreasonable Effectiveness of Recurrent Neural Networks ([Link](https://karpathy.github.io/2015/05/21/rnn-effectiveness/))
 
+- "Vanilla" neural networks are usually limited to a single input and a single
+  output; this is the primary advantage of RNNs
+
+- Even single inputs can sometimes be modelled sequentially!
+    - E.g. Steering attention around an image
+
+- Basic function of an RNN can be represented by a `step` method, e.g.:
+
+```python
+rnn = RNN()
+y = rnn.step(x)  # x is input vector; y is output vector
+```
+
+- A simple, pseudo-implementation of `step`
+    - Three parameters, `W_hh`, `W_xh`, `W_hy`
+    - Hidden state `self.h`, initialized to the zero vector
+    - `np.tanh` squashes activations to the range `[-1, 1]`
+
+```python
+class RNN(object):
+    def step(self, x):
+        # Update hidden state.
+        self.h = np.tanh(np.dot(self.W_hh, self.h) + np.dot(self.W_xh, x))
+        # Compute the output vector.
+        return np.dot(self.W_hy, self.h)
+```
+
+### Character-Level Language Models
+
+- I don't quite understand the business with the "hidden layer", which seems to
+  be the memory vector...? In the diagram heading up this section, it's not the
+  same length as the input vector! What gives?
+
+- Elucidation of training steps:
+    - Each output layer is paired with a target
+    - Correct target should have high confidence; all others should be lower
+        - If not, run backpropogation algorithm + paramter update to adjust
+          weights
+            - What's the role of the backpropogation algorithm here...? Has to
+              do with the chain rule somehow?
+
+## PyTorch Tutorial notes
+
+- Tensors are like matrices, but they can be indexed in more than two dimensions
+  (!)
+    - Essentially, a generalization of matrices beyond two dimensions
+    - Easy way to think about this is in terms of dimensions:
+        - Index a vector (1D tensor) -> scalar
+        - Index a matrix (2D tensor) -> vector
+        - Index a 3D tensor -> matrix
+
+- Two handy operations:
+    - `torch.cat`: Concatenate two tensors (defaults to axis `0`, or rows)
+    - `tensor.view`: Reshape a tensor
+
+- Why would the embedding dimension (`embedding_dim`) be different than the
+  number of embeddings (`num_embeddings`) in `torch.nn.Embedding`?
+
+- Seems like one difference between backpropogation and parameter updates is:
+  backpropogation determines the right gradient; parameter update acutally
+  implements it...? Is that right?
