@@ -1,6 +1,6 @@
 # RNN Notes
 
-## [Text Generation with Recurrent Neural Networks](https://blog.paperspace.com/recurrent-neural-networks-part-1-2/)
+## Text Generation with Recurrent Neural Networks ([Link](https://blog.paperspace.com/recurrent-neural-networks-part-1-2/))
 
 ### Background
 
@@ -42,7 +42,6 @@ P(S) = product(P(wt|w<t) for wt in S)
     - What does "at each time step `t`" mean here? As in, for each `t`, we need
       to compute `wt+1`? Seems expensive...
 
-
 ### Recurrent Neural Networks
 
 - Key insight: humans predict words from context, too!
@@ -74,7 +73,7 @@ P(S) = product(P(wt|w<t) for wt in S)
 - Combination of inputs and outputs leads to three common applications:
     1. Sequential input -> sequential output (translation, tagging)
     2. Sequential input -> single output (classification, sentiment analysis)
-    3. Single input -> sequential output (image captioning)
+    3. Single input -> sequential output (image captioning, text generation...?)
 
 ### Recurrent Language Models
 
@@ -104,7 +103,7 @@ xj = E.T * wj
     1. Initialize memory vector `h` to zero
     2. Input at first time step is special token `</s>` to denote the start of
        a sentence
-    3. Output is the probability of every word in V given `</s>`
+    3. Output is the probability of every word in `V` given `</s>`
     4. Update memory vector `h` and send to the next time step
     5. Repeat!
 
@@ -115,7 +114,7 @@ xj = E.T * wj
 #### Backward path
 
 - Missing piece: Loss function for learning the appropriate weights
-    - Negative log probability that the model assigns to the correct output
+    - Negative log probability that the model assigns to the correct output:
 
 ```python
 loss = -log(P(S))
@@ -125,7 +124,7 @@ loss = -log(product((P(wt|w<t) for wt in S)))
 
 # Log of a product is equal to the sum of the logs
 # (xt+1 is the actual next word)
-loss = -sum(log(P(wt = xt+1)))
+loss = -sum(log(P(wt = xt+1)) for wt in S)
 ```
 
 - Blog post claims:
@@ -133,4 +132,134 @@ loss = -sum(log(P(wt = xt+1)))
       we can backpropagate the loss through all the previous RNN units and
       embedding matrices and update its weights accordingly."
         - What's going on here...?
-    - "We can backpropogate the loss through all the previous RNN"
+
+### Generalization to Unseen N-grams
+
+- As far as I can tell, "generalize to unseen n-grams" means measuring how the
+  model performs on unseen data (validation)
+
+- Think about the model as a composite of two functions `f` and `g`
+    - `f`: Map a sequence of preceding `n-1` words to continuous vector space,
+      creating memory vector `h`
+      (...?)
+    - `g`: Map memory vector `h` to probability distribution
+        - First, affine transformation
+            - Multiply by weight matrix, add to bias vector
+        - Then, softmax normalization
+            - Convert the output to a valid probability distribution
+
+```python
+# How might we model f in code...?
+
+# g:
+# (h is the memory vector; U is the weight matrix; c is the bias vector)
+g = lambda h: softmax(U.T * h + c)
+```
+
+- I don't quite get this...?
+    - Since each element of the output vector is a vector multiplication of `h`
+      with the corresponding row of `U.T`, "This means that the predicted
+      probability of the model for the i-th word of the dictionary is
+      proportional to how aligned the i-th column of `U.T` is with the context
+      vector `h`."
+        - I think perhaps that for both vectors `U.T` and `h`, the i-th element
+          in the vector corresponds to the same word in the dictionary...? But
+          I still don't get what `U.T` is?
+
+- Note that the equation above implies that if two sequences are usually
+  followed by a similar set of words, their context vectors `h1` and `h2` must
+  necessarily be similar
+    - "Similar" = "maps to nearby points in the context vector space"
+    - This property allows the model to generalize well!
+        - e.g. Bigram model of "three teams/four teams/four groups", where
+          "three groups" will receive a high probability because the context
+          word `three` is projected to a point in the context space close to
+          `four`
+    - Adheres to the "distributional hypothesis of language": Words that occur
+      in similar contexts tend to have similar meanings
+
+- How are the "context space" and the "word space" different...?
+
+### Text Generation
+
+- How to create a new sequence? Quick sketch:
+    1. Initialize the context vector `h0` randomly
+    2. Unroll the RNN; at each time step, sample one likely word from the
+       output distribution
+    3. Feed the word back into the RNN, rinse, repeat
+
+- Common problem: Corpus often doesn't have enough text
+    - One solution: _pre-train_ the model on a generic corpus (e.g. Gutenberg
+      corpus) to give it a basic understanding of words and context, then train
+      on a more focused corpus
+
+## Understanding LSTM Networks ([Link](https://colah.github.io/posts/2015-08-Understanding-LSTMs/))
+
+### The Problem of Long-Term Dependencies
+
+- Basic problem: Relevant context is sometimes provided far away from the
+  current time step of a sequence
+    - E.g. if a text is about growing up in France, "I speak fluent..." would
+      naturally lead a human to the token `French`, but the relevant token
+      `France` may be very far away in the sequence, and the model will have
+      forgotten it!
+    - RNNs should _theoretically_ be able to deal with this problem, but in
+      practice the often don't -- why...?
+
+### LSTM Networks
+
+- "LSTM" = "Long Short Term Memory"
+    - Capable of learning long-term dependencies
+
+- Add **three extra layers** to every cell
+
+### Core Idea Behind LSTMs
+
+- **Cell state**: Persists across the chain, with minor linear interactions
+
+- Can remove or add info to cell state, regulated by _gates_
+    - Gate: sigmoid neural net layer + pointwise multiplication
+        - Sigmoid layer outputs a float in the range `[0, 1]`, which weights how
+          much info should get through
+        - LSTM has three gates
+
+### Step-by-step Walkthrough
+
+1. Decide what info to throw away from the cell state
+    - "Forget gate layer" controls this step
+        - e.g. If the subject has changed, forget the component of the cell
+          state that stores info about the subject's gender for pronouns
+
+2. Decide what new info to store in the cell state
+    - Two steps:
+        1. "Input gate layer" (sigmoid) decides which values to update
+            - Why is this distinct from the forgetting step...?
+        2. tanh layer (variant of sigmoid with the range `[-1, 1]`) produces
+           a vector of candidate values `~Ct` that could be added to the state
+    - E.g. Add the gender of the new subject to the cell state
+
+3. Update the old cell state `Ct-1` to the new state `Ct`
+    - Two steps:
+        1. Multiply old state `Ct-1` by `ft` (forget gate layer)
+        2. Add `it * ~Ct` to the cell state (new candidate values, scaled by how
+           much we want to update each value)
+    - This is where the gender gets forgotten and relearned
+
+4. Determine output
+    - Filtered version of the cell state:
+        1. Apply sigmoid layer to decide which parts of the cell state to output
+           (I suppose as distinguished from which parts to continue storing, as
+           in steps 1 and 2...?)
+        2. Put the cell state `Ct` through a tanh layer to push the values to be
+           bewteen -1 and 1, and multiply by the output of the sigmoid gate
+    - E.g. If we just saw a subject, output information relevant to a verb (like
+      singular or plural) which will probably be the part of speech that follows
+
+### Variations
+
+- Gated Recurrent Units (GRUs) seem relevant to me
+    - Combine forgetting and input gates into a single "update" gate, among
+      other simplifications
+    - Popular as of 2015 
+
+
