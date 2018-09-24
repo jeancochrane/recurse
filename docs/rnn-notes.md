@@ -325,3 +325,33 @@ class RNN(object):
 - Seems like one difference between backpropogation and parameter updates is:
   backpropogation determines the right gradient; parameter update acutally
   implements it...? Is that right?
+
+## Word Embeddings ([Link](https://pytorch.org/tutorials/beginner/nlp/word_embeddings_tutorial.html#sphx-glr-beginner-nlp-word-embeddings-tutorial-py))
+
+- Sparse word vectors (like the ones covered in the tutorial above) have a
+  few major drawbacks:
+    - Must store and manage potentially enormous vectors (one position for each
+      word in the vocabulary)
+    - Doesn't store semantic meaning
+
+- Alternative: use _dense vectors_ to store semantic meaning
+    - e.g. `mathematician` could be represented as:
+
+```python
+embeddings = ['can_run', 'likes_coffee', 'majored_in_physics']
+qmath = [2.3, 9.4, -5.5]
+```
+
+- Then, comparison can be achieved with cosine distance (so distance ranges
+  `[-1, 1]`):
+
+```python
+similarity = lambda x1, x2: (embed(x1) * embed(x2)) / (len(embed(x1))
+* len(embed(x2)))
+```
+
+- One-hot vectors can be considered from the perspective of dense vectors --
+  they simply assign each word its own semantic meaning!
+
+- Instead of assigning these manually, we let the model "learn" the embeddings,
+  and treat the number of embeddings as a parameter
