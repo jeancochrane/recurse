@@ -91,6 +91,10 @@ P(S) = product(P(wt|w<t) for wt in S)
       the weight matrix instead of performing a full multiplication, for
       performance)
     - What is the weight matrix, and what are the "continuous" vectors...?
+        - I'm still not sure, but I know at least that the hidden layer usually
+          has different dimensions from the input layer, so the weight matrix
+          here serves as a transformation that allows the input to be passed
+          through the hidden layer(s)
 
 ```python
 # Weight the input vectors to produce a sequence of continous vectors
@@ -101,8 +105,10 @@ xj = E.T * wj
 
 - General algorithm:
     1. Initialize memory vector `h` to zero
+        - Or better yet: pre-train on a general corpus!
     2. Input at first time step is special token `</s>` to denote the start of
        a sentence
+        - Only if this is included in the source data, I think?
     3. Output is the probability of every word in `V` given `</s>`
     4. Update memory vector `h` and send to the next time step
     5. Repeat!
@@ -110,6 +116,8 @@ xj = E.T * wj
 - Note that the output is a _softmax layer_ (sequence whose sum is 1) and also
   a _probability distribution_ over all `V`, where element `i` represents the
   probability of the word `Vi` being the next word to appear in the sentence
+    - Why does softmax transform the hidden layer into a probability
+      distribution...?
 
 #### Backward path
 
@@ -141,7 +149,6 @@ loss = -sum(log(P(wt = xt+1)) for wt in S)
 - Think about the model as a composite of two functions `f` and `g`
     - `f`: Map a sequence of preceding `n-1` words to continuous vector space,
       creating memory vector `h`
-      (...?)
     - `g`: Map memory vector `h` to probability distribution
         - First, affine transformation
             - Multiply by weight matrix, add to bias vector
@@ -296,11 +303,15 @@ class RNN(object):
 - I don't quite understand the business with the "hidden layer", which seems to
   be the memory vector...? In the diagram heading up this section, it's not the
   same length as the input vector! What gives?
+    - This is because the hidden layer doesn't necessarily line up with the
+      words! As the [word embeddings](#word-embeddings-link) section details,
+      often the hidden layers will keep track of an arbitrary number of semantic
+      features, instead of simply tracking to the one-hot encoding of the words.
 
 - Elucidation of training steps:
     - Each output layer is paired with a target
     - Correct target should have high confidence; all others should be lower
-        - If not, run backpropogation algorithm + paramter update to adjust
+        - If not, run backpropogation algorithm + parameter update to adjust
           weights
             - What's the role of the backpropogation algorithm here...? Has to
               do with the chain rule somehow?
@@ -321,9 +332,11 @@ class RNN(object):
 
 - Why would the embedding dimension (`embedding_dim`) be different than the
   number of embeddings (`num_embeddings`) in `torch.nn.Embedding`?
+    - I think this is a case of bad variable naming -- `num_embeddings` actually
+      refers to the _vocabulary size_
 
 - Seems like one difference between backpropogation and parameter updates is:
-  backpropogation determines the right gradient; parameter update acutally
+  backpropogation determines the right gradient; parameter update actually
   implements it...? Is that right?
 
 ## Word Embeddings ([Link](https://pytorch.org/tutorials/beginner/nlp/word_embeddings_tutorial.html#sphx-glr-beginner-nlp-word-embeddings-tutorial-py))
@@ -355,3 +368,8 @@ similarity = lambda x1, x2: (embed(x1) * embed(x2)) / (len(embed(x1))
 
 - Instead of assigning these manually, we let the model "learn" the embeddings,
   and treat the number of embeddings as a parameter
+
+- Another approach to pre-training: Continuous Bag of Words (CBOW)
+    - Train word embeddings using words immediately before and after
+        - What does it mean to train a "Word Embedding" model...? How would
+          a word embedding module connect to, say, an LSTM?
