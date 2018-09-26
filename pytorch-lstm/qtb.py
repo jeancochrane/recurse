@@ -1,29 +1,33 @@
-# Adapted from https://pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html#example-an-lstm-for-part-of-speech-tagging
+# Adapted from:
+#   - https://pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html#example-an-lstm-for-part-of-speech-tagging
+#   - https://github.com/fastai/fastai/blob/master/courses/dl1/lesson6-rnn.ipynb
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 
+
 class LSTMGenerator(nn.Module):
     """
-    RNN implementing 8-gram character-level language model.
+    Simple LSTM RNN for text generation.
     """
     def __init__(self, vocab_size, embedding_size, hidden_size):
         super().__init__()
-        # Save the hidden size for use in init_hidden.
+        self.vocab_size = vocab_size
+        self.embedding_size = embedding_size
         self.hidden_size = hidden_size
 
         # Word embeddings.
-        self.embedding = nn.Embedding(vocab_size, embedding_size)
+        self.embedding = nn.Embedding(self.vocab_size, self.embedding_size)
 
         # The two parameters correspond to:
         #   first: input dimensions
         #   second: output dimensions (for hidden states)
-        self.lstm = nn.LSTM(embedding_size, hidden_size)
+        self.lstm = nn.LSTM(self.embedding_size, self.hidden_size)
 
         # The linear layer that maps from hidden state space to output space.
-        self.hidden2output = nn.Linear(hidden_size, vocab_size)
+        self.hidden2output = nn.Linear(self.hidden_size, self.vocab_size)
 
         # Initialize hidden state space.
         self.hidden = self.init_hidden()
@@ -43,7 +47,7 @@ class LSTMGenerator(nn.Module):
         Feed-forward the RNN.
         """
         # Retrieve word embeddings.
-        embeds = self.embeddings(sentence)
+        embeds = self.embedding(sentence)
 
         # Feed-forward, updating the hidden layer in the process.
         # (Don't quite understand the dimensionality of the embeddings view...?)
@@ -57,36 +61,66 @@ class LSTMGenerator(nn.Module):
         return output_scores
 
 
-def prepare_sequence(seq, to_ix):
+def prepare_train_test(seq):
     """
-    Turn a sequence of words, `seq`, into a tensor using the vocab index `to_ix`.
+    Chop a sequence up into 8-gram training pairs.
+    """
+    stop = len(train_ix)
+    return [(train_ix[i:i+8], train_ix[i+8]) for i in range(0, stop, 8) if i + 8 < stop]
 
-    TODO: Could probably become a classmethod on a Sequence datatype?
+
+def get_next_ix(seed, model, to_ix):
     """
-    idxs = [to_ix[w] for w in seq]
-    return torch.tensor(idxs, dtype=torch.long)
+    Use a model to get the next character for the string `seed`.
+    """
+    seed_to_ix = torch.tensor([to_ix[char] for char in seed], dtype=torch.long)
+    prob_dist = model(seed_to_ix)
+    return torch.multinomial(prob_dist[-1].exp(), 1).item()
 
 
 if __name__ == '__main__':
 
-    # Hyperparamters.
-    EMBEDDING_SIZE = 32
-    HIDDEN_SIZE = 32
+    import time
+    import os
 
-    # TODO: Prep training data.
-    training_data = []
-    word_to_ix = {}
-    vocab = set(word_to_ix.keys())
+    import torchtext
+
+    # Hyperparameters.
+    EMBEDDING_SIZE = 64
+    HIDDEN_SIZE = 64
+
+    # Import training and test data.
+    train_fpath = os.path.join('data', 'nietzche', 'train.txt')
+    test_fpath = os.path.join('data', 'nietzche', 'test.txt')
+
+    with open(train_fpath) as train_file:
+        train_text = train_file.read()
+    with open(test_fpath) as test_file:
+        test_text = test_file.read()
+
+    # Prepare vocabulary (universe of possible characters).
+    vocab = sorted(list(set(train_text + test_text)))
+    vocab_to_ix = {c: i for i, c in enumerate(vocab)}
+
+    # Encode the train/test data according to each character's index in the vocabulary.
+    train_ix = [vocab_to_ix[char] for char in train_text]
+    test_ix = [vocab_to_ix[char] for char in test_text]
+
+    # Format training and test data to include targets.
+    training_data = prepare_train_test(train_ix)
+    testing_data = prepare_train_test(test_ix)
+
+    # Temporarily restrict the training data to a smaller sample.
+    # training_data = training_data[:100]
 
     model = LSTMGenerator(len(vocab), EMBEDDING_SIZE, HIDDEN_SIZE)
-    loss_func = nn.NLLLoss(len(word_to_ix.keys()))
-    optimizer = optim.SGD(model.paramters(), lr=0.1)
+    loss_func = nn.NLLLoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.01)
 
-    import time
     start_time = time.time()
 
     losses = []
-    for epoch in range(10):
+    for epoch in range(100):
         total_loss = 0
         for sentence, target in training_data:
             # Clear gradients.
@@ -96,14 +130,15 @@ if __name__ == '__main__':
             model.hidden = model.init_hidden()
 
             # Prepare inputs.
-            x = prepare_sequence(sentence, word_to_ix)
-            y = prepare_sequence(target, word_to_ix)
+            x = torch.tensor(sentence, dtype=torch.long)
+            y = torch.tensor([target], dtype=torch.long)
 
             # Run the forward pass.
             y_pred = model(x)
 
             # Compute the loss and gradients, and update params.
-            loss = loss_func(y_pred, y)
+            loss = loss_func(y_pred[-1].view(1, -1), y)
+
             loss.backward()
             optimizer.step()
 
@@ -114,3 +149,13 @@ if __name__ == '__main__':
 
     print('Training took {secs} seconds'.format(secs=str(start_time-end_time)))
     print('Final loss: {loss}'.format(loss=losses[-1]))
+
+    # Generate some text!
+    output = seed = 'What is '
+    for i in range(400):
+        char_ix = get_next_ix(seed, model, vocab_to_ix)
+        char = vocab[char_ix]
+        output += char
+        seed = seed[1:] + char
+
+    print(output)

@@ -5,5 +5,5 @@ Following along with PyTorch's [Long-Short Term Memory Networks tutorial](https:
 ## Requirements
 
 ```
-pip install torch torchvision
+pip install -U -r requirements.txt
 ```
