@@ -55,7 +55,7 @@ loss_func = nn.NLLLoss()
 model = NGramLanguageModeler(len(vocab), EMBEDDING_DIM, CONTEXT_SIZE)
 optimizer = optim.SGD(model.parameters(), lr=0.001)
 
-for epoch in range(20):
+for epoch in range(600):
     total_loss = 0
     for context, target in trigrams:
         # Prep the inputs.
