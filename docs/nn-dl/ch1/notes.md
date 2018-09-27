@@ -69,7 +69,7 @@ def activation(x, w, b):
 
 - I don't get why NAND gates are universal computers...?
 
-- Often convential to draw _input layers_ of perceptrons -- these have no
+- Often conventional to draw _input layers_ of perceptrons -- these have no
   inputs, just configured to output a single value
     - Could we say that the value of the output is the bias of the input layer...?
 
@@ -90,4 +90,44 @@ def activation(x, w, b):
     - Instead of binary outputs, output is `sigmoid(np.dot(x, w) + b)`
         - Also known as the _logistic_ function
 
+```python
+def sigmoid(z):
+    """
+    Sigmoid function.
+    """
+    return 1 / (1 + (math.e ** -z))
 
+def sigmoid_activation(w, x, b):
+    """
+    Sigmoid neuron activation function.
+
+    Params:
+        - w: Weight vector.
+        - x: Input vector.
+        - b: Bias.
+    """
+    return sigmoid(numpy.dot(w, x) + b)
+```
+
+- To understand sigmoid, look at the extremes:
+    - As `z -> infinity`: `e ** -z -> 0`, hence `sigmoid(z) -> 1`
+    - As `z -> -infinity`: `e ** -z -> infinity`, hence `sigmoid(z) -> 0`
+
+- Shape of the sigmoid is a _smoothed step function_
+    - Step function -> perceptron, so a sigmoid neuron is in effect a smoothed
+    perceptron
+
+- With the sigmoid, `delta(output)` is a linear function of the changes `delta(weights)` and
+  `delta(bias)`, which makes it easy to choose changes to weights and bias that
+  correspond to small changes in the output
+    - I don't quite understand the math...? Would appreciate a rundown!
+        - Apparently partial derivatives are easy to calculate for exponentials,
+          which makes the sigmoid function attractive?
+    - Key: The sigmoid isn't particularly special; any function with
+      a similar smoothing property and a linear relationship between the output
+      and the weights/bias will be an appropriate _activation function_
+
+- Interpreting sigmoid output:
+    - When the output needs to be interpretable, we can set a threshold (such as
+      0.5) beyond which the output should be interpreted as one class vs. the
+      other
