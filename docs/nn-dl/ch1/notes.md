@@ -131,3 +131,100 @@ def sigmoid_activation(w, x, b):
     - When the output needs to be interpretable, we can set a threshold (such as
       0.5) beyond which the output should be interpreted as one class vs. the
       other
+
+### The architecture of neural networks
+
+- "Hidden layers" = "Not input or output layers"
+
+- Designing input and output layers is often straightforward; hidden layers, not
+  so much
+    - E.g. Network to detect a `9` from handwriting:
+        - 4096 input neurons (one per pixel)
+        - 1 output neuron (scalar, score) 
+        - ?? hidden neurons
+    - Instead: use heuristics to trade off time to train, accuracy
+
+- So far, we've only considered _feedforward_ networks
+    - Information is unidirectional, from the start to the end of the network
+        - RNNs work differently, since their neurons fire repeatedly
+
+## A simple network to classify handwritten digits
+
+- In reality, there are two parts to the handwriting recognition problem:
+    1. Segmentation -- separating individual digits 
+        - This turns out to be much simpler
+    2. Classification -- identifying each individual digits
+
+- Design architecture of the network:
+    - Input layer
+        - 28 x 28 pixels = 784 input neurons
+            - Each pixel is greyscale, with a value in the range `[0, 1]`
+        - `n` neurons in the hidden layer
+            - This will vary
+        - 10 neurons in the output layer, one for each digit
+            - If the neuron fires, the network thinks that it is that digit
+                - In other words: Look for the neuron with the highest
+                  _activation value_
+
+- Why does 10 output neurons work better than 4?
+    - Intuition: Each hidden neuron is looking at some aspect of the image;
+      these aspects are closely related to the shape of each digit, not to the
+      significant digit of the output bit (as would be the case in 4 outputs)
+        - Is this correct...?
+
+## Learning with gradient descent
+
+- 60,000 training samples; 10,000 test samples
+
+- Inputs/outputs:
+    - Input `x` is a 784-dimensional vector, with each dimension representing one
+      pixel in the image
+    - Output `y` is a 10-dimensional vector, with each dimension representing
+      a possible digit
+        - E.g. if the training sample is `6`, the output should be as follows
+            - Why is this transposed...?
+
+```python
+y = (0, 0, 0, 0, 0, 0, 1, 0, 0, 0)
+```
+
+- Goal: Algorithm to find weights and biases to approximate `y(x)` for all `x`
+
+- Cost function helps quantify how well the approximation performs
+    - Goal: Minimize cost function over weights and biases
+    - Quadratic cost (MSE):
+
+```python
+def mse(x, a, w, b):
+    """
+    Quadratic cost function (AKA MSE).
+
+    Params:
+        - x: Input vector.
+        - a: Expected output vector.
+        - w: Weight vector.
+        - b: Bias vector.
+    """
+    return (1/2 * len(x)) * sum((activation(xi, w, b) - yi)**2 for xi, yi in zip(x, a))
+```
+
+- Some properties of MSE:
+    - Cost is always non-negative, since each element is squared
+    - Cost approaches 0 as `y(x)` approaches the expected output `a`
+
+- Minimize cost function using the **gradient descent** algorithm
+    - Why not instead judge performance by the number of correctly classified
+      images? In this case, we couldn't make small adjustments to weights and
+      biases, since classification rarely changes. Minimizing a smooth cost function
+      allows for small changes; only after minimizing cost will we consider
+      classification accuracy.
+
+- **Gradient descent**: Abstract algorithm for minimizing any multivariable
+  function
+    - Intuition: Imagine simulating a ball rolling down the "valley" starting at a random
+      point
+        - Then, only have to know the "local shape" of the valley to know how
+          the ball should roll 
+  
+- Why use gradient descent and not simple derivatives? 
+    - Derivatives only work with a small number of variables
