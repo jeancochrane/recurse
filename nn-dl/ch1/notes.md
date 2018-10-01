@@ -228,3 +228,16 @@ def mse(x, a, w, b):
   
 - Why use gradient descent and not simple derivatives? 
     - Derivatives only work with a small number of variables
+
+## Toward deep learning
+
+- Distinction between "deep" and "shallow" learning: number of hidden layers
+    - Layers get more abstract as the network progresses
+        - E.g. "are there clusters of dark pixels?" -> "is there an eyebrow?" ->
+          "is the eyebrow above an iris?" -> "is there an eye?" -> "is this
+          a picture of a face?"
+            - Usually the layers won't be so intelligible to us, and the weights
+              and biases will be trained automatically, but the same progression
+              principle animates deep networks
+    - "Deep": "5 to 10 hidden layers"
+        - That doesn't seem that big to me...?
