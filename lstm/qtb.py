@@ -75,6 +75,7 @@ def get_next_ix(seed, model, to_ix):
     """
     seed_to_ix = torch.tensor([to_ix[char] for char in seed], dtype=torch.long)
     prob_dist = model(seed_to_ix)
+    # return torch.argmax(prob_dist[-1]).item()
     return torch.multinomial(prob_dist[-1].exp(), 1).item()
 
 
@@ -87,7 +88,7 @@ if __name__ == '__main__':
 
     # Hyperparameters.
     EMBEDDING_SIZE = 64
-    HIDDEN_SIZE = 64
+    HIDDEN_SIZE = 12
 
     # Import training and test data.
     train_fpath = os.path.join('data', 'nietzche', 'train.txt')
@@ -111,7 +112,7 @@ if __name__ == '__main__':
     testing_data = prepare_train_test(test_ix)
 
     # Temporarily restrict the training data to a smaller sample.
-    # training_data = training_data[:1000]
+    training_data = training_data[:10000]
 
     model = LSTMGenerator(len(vocab), EMBEDDING_SIZE, HIDDEN_SIZE)
     loss_func = nn.NLLLoss()
@@ -127,7 +128,7 @@ if __name__ == '__main__':
             model.zero_grad()
 
             # Clear hidden state of the LSTM.
-            model.hidden = model.init_hidden()
+            # model.hidden = model.init_hidden()
 
             # Prepare inputs.
             x = torch.tensor(sentence, dtype=torch.long)
@@ -147,7 +148,7 @@ if __name__ == '__main__':
 
     end_time = time.time()
 
-    print('Training took {secs} seconds'.format(secs=str(start_time-end_time)))
+    print('Training took {secs} seconds'.format(secs=str(end_time-start_time)))
     print('Final loss: {loss}'.format(loss=losses[-1]))
 
     # Generate some text!
