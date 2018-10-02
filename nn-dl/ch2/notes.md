@@ -89,3 +89,25 @@ def a(l, j):
 - One unusual operation we need for backpropogation: element-wise multiplication
   of two vectors, or the _Hadamard product_
     - In NumPy: `numpy.multiply()`
+
+## The four fundamental equations behind backpropagation
+
+- First, want to be able to measure _error_ for a given neuron
+    - Claim: `partial(C, z_lj)` is a decent measure of error
+        - To see this, think about behavior when the weighted input `z_lj`
+          changes: If `partial(C, z_lj)` is large, then changing the weighted
+          input by `delta(z_lj)` can have a big effect; on the other hand if
+          `partial(C, z_lj)` is close to zero, then it's difficult to affect the
+          cost by changing `z_lj`
+            - All of this because the change in `C` w.r.t `z_lj` can be
+              represented by `partial(C, z_lj) * delta(z_lj)`
+
+- Four fundamental equations:
+    1. Equation for the output layer `error(L)` (i.e. `partial(C, z_lj)`)
+    2. Equation for the error `error(L)` in terms of the error in the next
+       layer, `error(L+1)`
+        - This lets us move "backwards" through the network
+    3. Equation for the rate of change of the cost w.r.t. any _bias_ in the
+       network
+    4. Equation for the rate of change of the cost w.r.t. any _weight_ in the
+       network
