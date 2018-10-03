@@ -111,3 +111,100 @@ def a(l, j):
        network
     4. Equation for the rate of change of the cost w.r.t. any _weight_ in the
        network
+
+### The four equations in detail
+
+#### Output error of a neuron
+
+- Intuition: Rate of change of the activation of an output neuron, scaled by the
+  "importance" of that neuron to the network. 
+
+```python
+def output_error(L, j):
+    """
+    The error (represented by the partial derivative of C wrt the activation)
+    of the jth neuron in the output layer L.
+    """
+    return partial_deriv(C, activation(z(L, j)))k * deriv(activation(z(L, j)))
+
+def vectorized_output_error(L):
+    """
+    Vectorized form of the error of the output layer L.
+    """
+    return partial_deriv(C, activation(z(L))) * deriv(activation(z(L)))
+```
+
+#### Error for layer l given error in layer l+1
+
+- Intuition: Move the error backward through the network by multiplying it by
+  its transpose weight, then multiplying by the rate of change of the activation
+  of the previous neuron (similar to equation above).
+
+```python
+def prev_error(l):
+    """
+    The error of a layer l given the error in the proceeding layer l+1.
+    """
+    return np.dot(np.transpose(w(l+1)), output_error(l+1)) * deriv(activation(z(L)))
+```
+
+#### Rate of change of the cost w.r.t. any bias
+
+- Intuition: Exactly the same as the error!
+
+```python
+def partial_deriv_bias(l):
+    return vectorized_output_error(l)
+```
+
+#### Rate of change of the cost w.r.t. any weight
+
+- Intuition: Output error of the neuron, scaled by the input activation
+    - Hence, when the input activation is small, the neuron _learns slowly_
+
+```python
+def partial_deriv_weight(l, j, k):
+    return activation(l-1, j, k) * output_error(l, j)
+```
+
+### Insights from the four equations
+
+- The sigmoid function is near-flat as `sigmoid(z)` approaches either 0 or 1 --
+  at these tails, a weight applied to the layer will learn slowly, and we say the
+  neuron has _saturated_
+
+- Four fundamental equations hold for any activation function, so we can design
+  activation functions with certain properties in mind
+    - E.g. Could choose an activation function where the derivative is always
+      positive, to avoid saturation
+
+## The backpropagation algorithm
+
+- Intuition: Cost is a function of outputs from the network; to get at the
+  change in cost due to weights and biases, working backwards via the chain rule
+  makes some sense
+
+1. **Input `x`**
+    - Set the activation `a_1`.
+2. **Feedforward**
+    - For each layer `l`, compute the weighted input `z_l` and the activation
+      `a_l`.
+3. **Output error**
+    - Compute the `output_error` on the output layer `L`.
+4. **Backpropagate**
+    - Compute the `prev_error` for each layer in `range(2, L)`
+5. **Output the gradient**
+    - Use equations 3 and 4 to find the partial derivative of the cost w.r.t.
+      weights and biases, and construct the gradient
+
+## In what sense is backpropagation a fast algorithm?
+
+- Compute all partial derivatives `partial(C, wj)` with _one_ forward pass
+  through the network
+    - You could compute this using the definition of a partial derivative, but
+      you'd have to pass through the network for each weight!
+
+## The big picture
+
+- Basically: Compute the sum over the rate factor for all paths in the network
+  following a change in a weight
