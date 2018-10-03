@@ -112,7 +112,7 @@ if __name__ == '__main__':
     testing_data = prepare_train_test(test_ix)
 
     # Temporarily restrict the training data to a smaller sample.
-    training_data = training_data[:10000]
+    # training_data = training_data[:10000]
 
     model = LSTMGenerator(len(vocab), EMBEDDING_SIZE, HIDDEN_SIZE)
     loss_func = nn.NLLLoss()
