@@ -1,4 +1,4 @@
-# Notes on Chapter 2: How the backpropogation algorithm works
+# Notes on Chapter 2: How the backpropagation algorithm works
 
 ([Link](http://neuralnetworksanddeeplearning.com/chap2.html))
 
