@@ -73,3 +73,56 @@
 - Duplicates + missing data can be handled programmatically, but incorrect
   features/labels are a bit harder
     - Usually need to do some manual sniffing
+
+## Feature Crosses
+
+### Encoding nonlinearity
+
+- One way to fudge nonlinear boundaries: Create linear combinations of features
+  to encode nonlinearity
+
+### Crossing one-hot vectors
+
+- Crossing one-hot vectors is better thought of as _logical conjunctions_
+    - How is this represented...?
+        - Seems like it's a vector with length `len(A) * len(B)` with
+          a 1 corresponding to the intersection between the two vectors
+
+## Regularization
+
+- Note that feature crosses and nonlinear transformations can produce
+  overfitting! (Bias/variance tradeoff)
+
+### L2 Regularization
+
+- Intuition: Penalize overly-complicated models
+
+- _Structural risk minimization_: Minimize loss + complexity
+    - Optimization algorithm now has two terms: loss term + complexity term
+
+- Two ways to conceive of "complexity":
+    - Function of weights
+        - i.e. High absolute value weight -> high complexity
+    - Function of total number of features with nonzero weights
+        - i.e. More features with nonzero weights -> more complexity
+
+- L2 Regularization: Sum of squares of the feature weights
+
+```python
+def l2_regularization(w):
+    return sum(wi**2 for wi in w)
+```
+
+- In this definition, _outlier weights_ can have a disproportionate impact on
+  model complexity
+
+- Two effects on a model:
+    1. Encourage weight values close to 0
+    2. Encourages mean 0 gaussian distribution of weights
+        - Why...?
+
+### Lambda
+
+- AKA _regularization rate_: Tuning hyperparameter for complexity loss
+
+- High lambda -> narrower distribution of weights; low lambda -> flatter distribution
