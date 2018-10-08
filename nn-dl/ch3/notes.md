@@ -64,3 +64,18 @@ def deriv_cross_entropy(x, y, z):
     - Random weights mean that often the initial predictions are very wrong;
       sigmoid means that very wrong guesses will learn slowly with quadratic
       cost 
+
+### What does the cross-entropy mean? Where does it come from?
+
+- Cross-entropy stems from the goal of finding a cost function that produces
+  partial derivatives of the following form:
+
+```python
+partial_deriv(C, w_j) == x_j * (a - y)
+
+partial_deriv(C, b) == (a - y)
+```
+
+- Intuition: Cross-entropy is a measure of _surprise_
+    - Think of `a` as the probability that `y = 0`, and `1 - a` as the
+      probability that `y = 1`
