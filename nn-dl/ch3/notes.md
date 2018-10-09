@@ -79,3 +79,21 @@ partial_deriv(C, b) == (a - y)
 - Intuition: Cross-entropy is a measure of _surprise_
     - Think of `a` as the probability that `y = 0`, and `1 - a` as the
       probability that `y = 1`
+
+## Softmax
+
+- Another approach to addressing learning slowdown
+
+- Instead of replacing the cost function: replace the _activation function_
+  (sigmoid)
+
+- Rescale weighted inputs and use them to produce a probability distribution:
+
+```python
+def softmax(zi, z):
+    return np.exp(zi) / sum(np.exp(zl) for zl in z)
+```
+
+- Nice properties:
+    - Exponentials mean that all activations are positive
+    - Sum in the denominator means that all activations in a layer sum to 1
