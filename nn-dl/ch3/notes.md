@@ -97,3 +97,116 @@ def softmax(zi, z):
 - Nice properties:
     - Exponentials mean that all activations are positive
     - Sum in the denominator means that all activations in a layer sum to 1
+
+### Addressing learning slowdown with softmax
+
+- First, define the log-likelihood cost:
+
+```python
+def log_likelihood(aLy):
+    """
+    aLy must be a probability (range [0, 1]).
+    """
+    return -math.log(aLy)
+```
+
+- Partial derivatives w.r.t. biases and weights again avoid the derivative
+    - Similar partial derivatives as sigmoid + cross-entropy
+
+## Overfitting and regularization
+
+- **Early stopping**: At the end of each epoch, compute classification accuracy
+  on the validation set, and stop once we've reached an acceptable threshold
+  (once the accuracy has _saturated_)
+
+### Regularization
+
+- Techniques to reduce overfitting
+
+- L2 Regularization (or _weight decay_): Add a regularization term to the cost
+  function to add a penalty for complexity
+    - Intuition: Instruct the network to _prefer small weights_
+
+```python
+def reg_term(w, x, lam):
+    return (lam * sum(wi**2 for wi in w)) / (2 * len(x))
+```
+
+- Note that:
+    - Scaled by the regularization parameter, lambda
+    - Regularization term is averaged (mean squared weights)
+    - Doesn't include biases!
+
+- Any cost function can be regularized:
+
+```python
+def regularize(C, w, x, y, lam):
+    return C(x, y) + reg_term(w, x, lam) 
+```
+
+- Large weights will only be considered when the first term of the cost function
+  `C0` is greatly improved
+
+- Also known as _weight decay_, because the update equation factors to include
+  the term `(1 - (lr * lam) / len(x)) * w`
+
+- Another benefit of regularization: Less likely to get caught in local minima
+    - Heuristically: Large weights -> long weight vector; updates are designed
+      to produce small changes to weights; hence update won't "explore the
+      weight space" fully
+        - Not totally clear to me what this means...?
+
+### Why does regularization reduce overfitting?
+
+- Key question: What does it mean to say that "smaller weights" are "less
+  complex"?
+    - My guess: Weights that are close to 0 are similar to reducing the order of
+      the polynomial (hence reducing complexity of the model)
+    - Nielsen's explanation: With small weights, small changes to inputs won't change the overall
+      behavior much
+        - e.g. higher _variance_
+
+- Sidebar: Why can a 9th-order polynomial fit 9 data points exactly...?
+
+- No firm theoretical basis for regularization's benefit; it just works
+  empirically
+    - Something of a kludge
+    - Deeper issue: How to generalize from small amounts of data?
+        - Not currently well-formulated
+    - Gradient-based learning appears to have a "self-regularization effect",
+      although this is not well-understood
+
+- Regularizing bias is less important, since bias is not sensitive to the input
+    - (Recall that the primary problem with overfitting is seeing inputs that don't match
+      up with the training set)
+
+### Other techniques for regularization
+
+- Wide diversity of possible regularizations!
+
+#### L1 Regularization
+
+- Add the sum of the absolute values of the weights (as opposed to the sum of
+  squares)
+    - Difference: Weights shrink by a constant amount (as opposed to a function
+      of `w`)
+        - When `w` is large: L1 shrinks `w` slower
+        - When `w` is small: L1 shrinks `w` faster
+        - Cumulative effect: Drive "unimportant" weights to 0, concentrate
+          weights in the network
+
+#### Dropout
+
+- For each epoch: Randomly weight half the neurons at 0; forward and backward
+  pass through the network; repeat 
+    - Heuristically, this is similar to training many different neural nets, and
+      then having them "vote" on the predicted output
+        - Also: Reduces "co-dependency" between neurons
+            - Make sure that the model is resistent to loss of individual pieces
+              of evidence
+
+#### Artificially expanding the training data
+
+- Intuition: Make small modifications to (classification) inputs to artificially
+  produce more training data
+    - E.g. Rotate or skew images; add background noise or speed up/slow down sound
