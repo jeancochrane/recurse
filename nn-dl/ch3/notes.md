@@ -210,3 +210,37 @@ def regularize(C, w, x, y, lam):
 - Intuition: Make small modifications to (classification) inputs to artificially
   produce more training data
     - E.g. Rotate or skew images; add background noise or speed up/slow down sound
+
+## Weight initialization
+
+- Can we improve on initializing weights using independent normalized Gaussian
+  samples?
+    - Gaussians have a key problem: with large enough training input, standard
+      deviations of the input activations `zL` will be quite large,  causing
+      some neurons to saturate quickly
+
+- Claims that choosing different cost functions helps with saturated output
+  neurons, but not hidden neurons
+    - Why...?
+
+- Instead: Choose standard deviation for weights of `1 / sqrt(len(w))`
+    - "Squash" Gaussians
+    - Keep biases at 1 (will explain later)
+    - Now, `z` has a Gaussian distribution with mean 0 and standard deviation
+      `(sqrt(1.5))` (see exercise derivation)
+
+- Empirically: New approach to weight initialization speeds up initial training;
+  however, converges to the same weights
+    - Only in this case! In ch4 we'll see an example of a network whose
+      performance is improved, too
+
+## How to choose a neural network's hyperparameters?
+
+- Heuristics for setting up hyperparameters in a neural network
+
+- Broad strategy:
+    1. Try to get _any_ decent learning (i.e. better than chance)
+        - Reduce training data to a much simpler case (e.g. 0s and 1s)
+        - Strip network down to simplest architecture (fewest hidden neurons)
+        - Increase frequency of monitoring/logging (e.g. by lowering batch size
+          per epoch, or by reporting metrics in fewer epochs)

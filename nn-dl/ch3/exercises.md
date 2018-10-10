@@ -47,3 +47,60 @@ when `σ(z) = y` for all training inputs.
 I was able to make the expression equal to 0 by taking the partial derivative of the
 cost function with respect to `a` and then setting `a = y`. I'm not sure if this
 is right though...? Would appreciate a second look!
+
+## 4. Monotonicity of softmax
+
+### Question
+
+ Show that `∂aLj/∂zLk` is positive if `j=k` and negative if `j≠k`. As a consequence,
+ increasing `zLj` is guaranteed to increase the corresponding output activation,
+ `aLj`, and will decrease all the other output activations. We already saw this
+ empirically with the sliders, but this is a rigorous proof.
+
+### Answer
+
+I'm having trouble with this one! Stuck on the differentiation.
+
+## 5. Non-locality of softmax
+
+### Question
+
+A nice thing about sigmoid layers is that the output `aLj` is a function of the
+corresponding weighted input, `aLj = σ(zLj)`. Explain why this is not the case for
+a softmax layer: any particular output activation `aLj` depends on all the
+weighted inputs.
+
+### Answer
+
+The key here is the denominator of the softmax function, which sums over _all_
+weighted inputs in the layer.
+
+## 6.
+
+### Question
+
+As discussed above, one way of expanding the MNIST training data is to use small
+rotations of training images. What's a problem that might occur if we allow
+arbitrarily large rotations of training images?
+
+### Answer
+
+If we allow arbitrarily large rotations of training images, the digits may not
+be accurate to their labels anymore! (e.g. "9" rotated 180 degrees should be
+classified as "6")
+
+## 7.
+
+### Question
+
+Verify that the standard deviation of `z=∑jwjxj+b` in the paragraph above is
+`sqrt(3/2)`. It may help to know that: (a) the variance of a sum of independent
+random variables is the sum of the variances of the individual random variables;
+and (b) the variance is the square of the standard deviation.
+
+### Answer
+
+See paper derivation. (You also need to know that the variance of a random
+variable `Y` scaled by a constant `c` is `c**2 * var(Y)`.)
+
+Shouldn't this be `3/2 * 1000`...?
