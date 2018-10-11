@@ -244,3 +244,92 @@ def regularize(C, w, x, y, lam):
         - Strip network down to simplest architecture (fewest hidden neurons)
         - Increase frequency of monitoring/logging (e.g. by lowering batch size
           per epoch, or by reporting metrics in fewer epochs)
+
+### Learning rate
+
+- I don't quite understand the sidebar about gradient descent...?
+    - In particular:
+
+> Briefly, a more complete explanation is as follows: gradient descent uses
+> a first-order approximation to the cost function as a guide to how to decrease
+> the cost. For large η, higher-order terms in the cost function become more
+> important, and may dominate the behaviour, causing gradient descent to break
+> down. This is especially likely as we approach minima and quasi-minima of the
+> cost function, since near such points the gradient becomes small, making it
+> easier for higher-order terms to dominate behaviour.
+
+- Start by finding a **threshold value** for `η`: The smallest value at which
+  the training cost begins to oscillate upwards during the first few epochs
+    - This indicates an upper bound of the order of magnitude
+
+- Why set the learning rate by monitoring the cost against the training set,
+  and not the classification accuracy of the validation set?
+    - Nielsen's (somewhat idiosyncratic) preference: Learning rate is meant to
+      affect speed of convergence, not necessarily accuracy; hence it seems
+      harmless to use training cost as a metric
+
+### Use early stopping to determine the number of training epochs
+
+- In brief:
+    1. At the end of each epoch, compute validation accuracy
+    2. If the accuracy stops improving, terminate
+
+- Helps determine epochs automatically
+    - In the early stages, you might actually want to play with epochs; in
+      particular, it can be nice to know if you're overfitting
+
+- Threshold of thumb: Classification hasn't improved in ~10 epochs
+    - Not a panacea! Sometimes networks are flat and then start improving again
+    - Good for initial experimentation
+
+### Learning rate schedule
+
+- Intuition: Start with a large learning rate; decrease as the network
+  approaches convergence
+    - Similar approach as early stopping: Halve the learning rate when you
+      see no-improvement-in-10; stop at some threshold (e.g. 1/128th of the
+      original value)
+
+- Usually only useful when you want to get maximum performance; otherwise, just
+  another headache hyperparameter to deal with
+
+### Regularization parameter
+
+- Advice: Figure out learning rate before regularization rate (i.e. stat with 0)
+    - Nielsen doesn't have a principled approach to starting learning rate;
+      instead, suggests starting at 1.0 and increasing/decreasing by orders of
+      magnitude
+        - Then, return and reoptimize `η`
+
+### Mini-batch size
+
+- Trade-off:
+    - Too small, and you don't take advantage of matrix operations/hardware
+    - Too large, and you're not updating weights frequently enough
+
+- Approach: Get good-enough results from other parameters, _then_ experiment
+  with mini-batch sizes
+    - This works because batch size is independent of the other hyperparameters
+
+- Plot validation accuracy against time
+    - Real time, not epochs! Epochs will remain constant; the relevant variable
+      is elapsed time in the world 
+
+- Interestingly, we want to scale the learning rate as we increase the
+  mini-batch size
+    - This is because the update is modeled as `w - (()η/n) * sum(grad for grad in
+      gradient))`, so if we scale `η` such that it stays constant as `n`
+      increases, it's similar to doing online learning for `n` samples at a time
+      (but can take advantage of matrix speedups)
+        - Not quite _equivalent_, since the gradient for each sample is
+          calculated against the same set of weights (in online learning the
+          gradient is calculated against an updated set of weights each time)
+
+### Automated tuning techniques
+
+- Grid search: Search through hyperparameter space for optimal param
+  combinations
+
+## Other techniques
+
+

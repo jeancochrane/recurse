@@ -104,3 +104,16 @@ See paper derivation. (You also need to know that the variance of a random
 variable `Y` scaled by a constant `c` is `c**2 * var(Y)`.)
 
 Shouldn't this be `3/2 * 1000`...?
+
+## 8.
+
+### Question
+
+It's tempting to use gradient descent to try to learn good values for
+hyper-parameters such as `λ` and `η`. Can you think of an obstacle to using gradient
+descent to determine `λ`? Can you think of an obstacle to using gradient descent
+to determine `η`?
+
+### Answer
+
+???
