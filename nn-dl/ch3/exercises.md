@@ -115,5 +115,4 @@ descent to determine `λ`? Can you think of an obstacle to using gradient descen
 to determine `η`?
 
 ### Answer
-
 ???
