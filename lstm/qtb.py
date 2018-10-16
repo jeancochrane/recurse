@@ -112,7 +112,9 @@ if __name__ == '__main__':
     testing_data = prepare_train_test(test_ix)
 
     # Temporarily restrict the training data to a smaller sample.
-    training_data = training_data[:1000]
+    # training_data = training_data[:1000]
+
+    training = [training_data[i:i+6000] for i in range(0, len(training_data), 6000)]
 
     model = LSTMGenerator(len(vocab), EMBEDDING_SIZE, HIDDEN_SIZE)
     loss_func = nn.NLLLoss()
@@ -120,37 +122,40 @@ if __name__ == '__main__':
 
     start_time = time.time()
 
-    losses = []
-    for epoch in range(30):
-        total_loss = 0
-        for (batch, (sentence, target)) in enumerate(training_data):
-            # Clear gradients.
-            model.zero_grad()
+    for step in range(3):
+        losses = []
+        for epoch, training_data in enumerate(training):
+            total_loss = 0
+            for (batch, (sentence, target)) in enumerate(training_data):
+                # Clear gradients.
+                model.zero_grad()
 
-            # Clear hidden state of the LSTM.
-            model.hidden = model.init_hidden()
+                # Clear hidden state of the LSTM.
+                model.hidden = model.init_hidden()
 
-            # Prepare inputs.
-            x = torch.tensor(sentence, dtype=torch.long)
-            y = torch.tensor(target, dtype=torch.long)
+                # Prepare inputs.
+                x = torch.tensor(sentence, dtype=torch.long)
+                y = torch.tensor(target, dtype=torch.long)
 
-            # Run the forward pass.
-            y_pred = model(x)
+                # Run the forward pass.
+                y_pred = model(x)
 
-            # Compute the loss and gradients, and update params.
-            loss = loss_func(y_pred, y)
+                # Compute the loss and gradients, and update params.
+                loss = loss_func(y_pred, y)
 
-            loss.backward()
-            optimizer.step()
+                loss.backward()
+                optimizer.step()
 
-            total_loss += loss.item()
+                total_loss += loss.item()
 
-            if batch % 10 == 0:
-                print('Epoch %d : Batch %d : Loss %s' % (epoch, batch, loss.item()))
+                if batch % 100 == 0:
+                    print('Epoch %d : Batch %d : Loss %s' % (epoch, batch, loss.item()))
 
-        losses.append(total_loss/len(training_data))
+            losses.append(total_loss/len(training_data))
 
-    end_time = time.time()
+            print('Losses: {losses}'.format(losses=losses))
+
+        end_time = time.time()
 
     print('Training took {secs} seconds'.format(secs=str(end_time-start_time)))
     print('Final loss: {loss}'.format(loss=losses[-1]))
