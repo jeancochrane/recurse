@@ -66,7 +66,7 @@ def prepare_train_test(seq):
     Chop a sequence up into 8-gram training pairs.
     """
     stop = len(train_ix)
-    return [(train_ix[i:i+8], train_ix[i+8]) for i in range(0, stop, 8) if i + 8 < stop]
+    return [(train_ix[i:i+8], train_ix[i+1:i+9]) for i in range(0, stop, 8) if i + 9 < stop]
 
 
 def get_next_ix(seed, model, to_ix):
@@ -87,8 +87,8 @@ if __name__ == '__main__':
     import torchtext
 
     # Hyperparameters.
-    EMBEDDING_SIZE = 64
-    HIDDEN_SIZE = 12
+    EMBEDDING_SIZE = 256
+    HIDDEN_SIZE = 256
 
     # Import training and test data.
     train_fpath = os.path.join('data', 'nietzche', 'train.txt')
@@ -112,44 +112,49 @@ if __name__ == '__main__':
     testing_data = prepare_train_test(test_ix)
 
     # Temporarily restrict the training data to a smaller sample.
-    # training_data = training_data[:10000]
+    training_data = training_data[:1000]
 
     model = LSTMGenerator(len(vocab), EMBEDDING_SIZE, HIDDEN_SIZE)
     loss_func = nn.NLLLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.01)
+    optimizer = optim.SGD(model.parameters(), lr=0.05)
 
     start_time = time.time()
 
     losses = []
-    for epoch in range(100):
+    for epoch in range(30):
         total_loss = 0
-        for sentence, target in training_data:
+        for (batch, (sentence, target)) in enumerate(training_data):
             # Clear gradients.
             model.zero_grad()
 
             # Clear hidden state of the LSTM.
-            # model.hidden = model.init_hidden()
+            model.hidden = model.init_hidden()
 
             # Prepare inputs.
             x = torch.tensor(sentence, dtype=torch.long)
-            y = torch.tensor([target], dtype=torch.long)
+            y = torch.tensor(target, dtype=torch.long)
 
             # Run the forward pass.
             y_pred = model(x)
 
             # Compute the loss and gradients, and update params.
-            loss = loss_func(y_pred[-1].view(1, -1), y)
+            loss = loss_func(y_pred, y)
 
             loss.backward()
             optimizer.step()
 
             total_loss += loss.item()
-        losses.append(total_loss)
+
+            if batch % 10 == 0:
+                print('Epoch %d : Batch %d : Loss %s' % (epoch, batch, loss.item()))
+
+        losses.append(total_loss/len(training_data))
 
     end_time = time.time()
 
     print('Training took {secs} seconds'.format(secs=str(end_time-start_time)))
     print('Final loss: {loss}'.format(loss=losses[-1]))
+    print('Losses: {losses}'.format(losses=losses))
 
     # Generate some text!
     output = seed = 'What is '
