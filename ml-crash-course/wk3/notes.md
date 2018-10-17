@@ -32,7 +32,8 @@
     - More so that people can understand you than for better performance
 
 - Don't mix **special values** (like nulls) with actual data
-    - Instead, use encodings
+    - Instead, use encodings (e.g. `quality_rating` and
+      `is_quality_rating_defined`)
 
 - Don't **tightly couple** to upstream data representations
 
