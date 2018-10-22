@@ -1,3 +1,5 @@
+# Word-level implementation of an RNN for text generation.
+#
 # Adapted from:
 #   - https://pytorch.org/tutorials/beginner/nlp/sequence_models_tutorial.html#example-an-lstm-for-part-of-speech-tagging
 #   - https://github.com/fastai/fastai/blob/master/courses/dl1/lesson6-rnn.ipynb
@@ -97,6 +99,9 @@ if __name__ == '__main__':
     with open(test_fpath) as test_file:
         test_text = test_file.read()
 
+    train_text = train_text.split()
+    test_text = test_text.split()
+
     # Prepare vocabulary (universe of possible characters).
     vocab = sorted(list(set(train_text + test_text)))
     vocab_to_ix = {c: i for i, c in enumerate(vocab)}
@@ -112,15 +117,16 @@ if __name__ == '__main__':
     # Temporarily restrict the training data to a smaller sample.
     # training_data = training_data[:1000]
 
-    training = [training_data[i:i+6000] for i in range(0, len(training_data), 6000)]
+    train_step = round(len(training_data)/10)
+    training = [training_data[i:i+train_step] for i in range(0, len(training_data), train_step)]
 
     model = LSTMGenerator(len(vocab), EMBEDDING_SIZE, HIDDEN_SIZE)
     loss_func = nn.NLLLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.05)
+    optimizer = optim.SGD(model.parameters(), lr=0.1)
 
     start_time = time.time()
 
-    for step in range(3):
+    for step in range(1):
         losses = []
         for epoch, training_data in enumerate(training):
             total_loss = 0
@@ -153,18 +159,18 @@ if __name__ == '__main__':
 
             print('Losses: {losses}'.format(losses=losses))
 
-        end_time = time.time()
+    end_time = time.time()
 
     print('Training took {secs} seconds'.format(secs=str(end_time-start_time)))
     print('Final loss: {loss}'.format(loss=losses[-1]))
     print('Losses: {losses}'.format(losses=losses))
 
     # Generate some text!
-    output = seed = 'What is '
+    output = seed = ['What', 'is', 'the']
     for i in range(400):
         char_ix = get_next_ix(seed, model, vocab_to_ix)
         char = vocab[char_ix]
-        output += char
-        seed = seed[1:] + char
+        output.append(char)
+        seed[1:].append(char)
 
     print(output)
