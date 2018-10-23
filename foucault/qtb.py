@@ -102,3 +102,16 @@ model.fit(x, y,
           batch_size=128,
           epochs=60,
           callbacks=[print_callback])
+
+# Write model to disk.
+print('Saving model to disk...')
+model_json = model.to_json()
+with open('model.json', 'w') as json_file:
+    json_file.write(model_json)
+print('Model saved to file model.json')
+print()
+
+# Write weights to disk.
+print('Saving weights to disk...')
+model.save_weights('model.h5')
+print('Weights saved to file model.h5')
